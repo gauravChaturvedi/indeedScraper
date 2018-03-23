@@ -1,39 +1,71 @@
 import requests
 import bs4
 from bs4 import BeautifulSoup
-import pandas as pd
-import time
+import csv
 
-URL = "https://www.indeed.com/jobs?q=fintech&l=New+York"
-#conducting a request of the stated URL above:
-page = requests.get(URL)
-#specifying a desired format of “page” using the html parser - this allows python to read the various components of the page, rather than treating it as one long string.
-soup = BeautifulSoup(page.text, "html.parser")
-#printing soup in a more structured tree format that makes for easier reading
-# print(soup.prettify())
+#This is the list that will hold the dictionary for each job
+listOfDict = []
 
-allData = []
-jobs = []
-city = []
-company = []
+#URL to scrape data from
+URL = "https://www.indeed.com/jobs?q=fintech&&start=%d"
+# page = requests.get(URL)
+# soup = BeautifulSoup(page.text, "html.parser")
+#To print the soup in a more structured format
+#print(soup.prettify())
+
+
+
+#This function extracts Job data from a webpage
 def extract_job_title_from_result(soup):
     for div in soup.find_all(name="div", attrs={"class":"row"}):
-        # jobDetails = ''
+        # Initiate empty object to hold data for a job
+        jobDict = {}
+
+        # Fetch Job Title
         for a in div.find_all(name="a", attrs={"data-tn-element":"jobTitle"}):
-            jobs.append(a["title"])
-            # jobDetails = a["title"] + '****'
+            jobDict["jobTitle"] = a["title"]
+
+        # Fetch Job Location
         c = div.find_all("span", attrs={"class": "location"})
         for span in c:
-          city.append(span.text)
-        #   jobDetails += span.text + '*****'
+          jobDict["location"] = span.text
+
+        # Fetch Company name
         comps = div.findAll("span", attrs={"class": "company"})
         for a in comps:
-            print(a.text)
-            print(type(a.text))
-            company.append(a.text)
-        # allData.append(jobDetails)
-extract_job_title_from_result(soup)
+            compStr = ''
+            compStr = a.text.replace(" ", "")
+            compStr = compStr.replace("\n", "")
+            jobDict["company"] = compStr
 
-# print(jobs)
-# print(allData)
-# print(soup.find_all(name="div", attrs={"class":"row"}))
+        #Append this job to our list of jobs
+        listOfDict.append(jobDict)
+
+
+# X is our counter
+# newURL is each new URL to scrape
+x = 0
+newURL = ''
+while x < 991:
+    newURL = URL % (x)
+    print(newURL)
+    #Fetch the page from the internet
+    page = requests.get(newURL)
+
+    #Parse the HTML
+    soup = BeautifulSoup(page.text, "html.parser")
+
+    #Extract all the relevant job details
+    extract_job_title_from_result(soup)
+
+    #Increment X to move to next page
+    x += 10
+
+#Extract headers to put in as column names in our excel
+keys = listOfDict[0].keys()
+
+#Write each job entry to the excel file
+with open('jobCount.csv', 'w') as output_file:
+    dict_writer = csv.DictWriter(output_file, keys)
+    dict_writer.writeheader()
+    dict_writer.writerows(listOfDict)
