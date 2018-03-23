@@ -22,15 +22,15 @@ def extract_job_title_from_result(soup):
         for a in div.find_all(name="a", attrs={"data-tn-element":"jobTitle"}):
             jobs.append(a["title"])
             # jobDetails = a["title"] + '****'
-        c = div.findAll("span", attrs={"class": "location"})
+        c = div.find_all("span", attrs={"class": "location"})
         for span in c:
           city.append(span.text)
         #   jobDetails += span.text + '*****'
-        company = div.findAll("span", attrs={"class": "company"})
-        # for a in company:
-        #     print(a.text)
-        #     print(type(a.text))
-        #     company.append(a.text)
+        comps = div.findAll("span", attrs={"class": "company"})
+        for a in comps:
+            print(a.text)
+            print(type(a.text))
+            company.append(a.text)
         # allData.append(jobDetails)
 extract_job_title_from_result(soup)
 
